@@ -21,7 +21,7 @@ exports.login = async (req, res, next) => {
       status: "error",
       message: "Email or Password is incorrect",
     });
-  }
+  } 
 
   const token = signToken(userDoc._id);
 
