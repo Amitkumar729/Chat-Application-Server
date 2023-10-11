@@ -1,5 +1,7 @@
 const express = require("express"); //web framework for the node.js
 
+const routes = require("./routes/index");
+
 //it gives the http request info like..end point, response time, all the login info
 const morgan = require("morgan");
 
@@ -44,6 +46,8 @@ app.use("/tawk", limiter);
 app.use(mongosanitize());
 
 app.use(xss);
+
+app.use(routes);
 
 
 module.exports = app; 

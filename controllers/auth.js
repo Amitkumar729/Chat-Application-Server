@@ -4,9 +4,9 @@ const User = require("../models/user");
 const filterObj = require("./utils/filterObj");
 const crypto = require("crypto");
 const { promisify } = require("util");
+const mailService = require("../services/mailer");
 
-const signToken = (userId = jwt.sign({ userId }, process.env.JWT_SECRET));
-
+const signToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET);
 //Signup - register - Send OTP - Verify OTP...
 
 //Register
@@ -63,7 +63,15 @@ exports.sendOtp = async (req, res, next) => {
     otp: new_otp,
     otp_expiry_time,
   });
+
   //TODO Send mail...
+  mailService.sendEmail({
+    from: "demo@gmail.com",
+    to: "example@gmail.com",
+    subject: "OTP for the tawk",
+    text: `Your OTp is ${new_otp}, This is valid for 10 mins.`,
+  });
+
 
   res.status(200).json({
     status: "Success",
@@ -73,37 +81,47 @@ exports.sendOtp = async (req, res, next) => {
 
 // Verify the OTP and upadate the record accordingly....
 exports.verifyOTP = async (req, res, next) => {
+  // verify otp and update user accordingly
   const { email, otp } = req.body;
-
   const user = await User.findOne({
     email,
-    otp_expiry_time,
+    otp_expiry_time: { $gt: Date.now() },
   });
 
   if (!user) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
-      message: "Email is invalid or OTP Expired",
+      message: "Email is invalid or OTP expired",
+    });
+  }
+
+  if (user.verified) {
+    return res.status(400).json({
+      status: "error",
+      message: "Email is already verified",
     });
   }
 
   if (!(await user.correctOTP(otp, user.otp))) {
     res.status(400).json({
       status: "error",
-      message: "OTP is invalid",
+      message: "OTP is incorrect",
     });
+
+    return;
   }
 
-  user.verified = true;
-  user.top = undefined;
+  // OTP is correct
 
+  user.verified = true;
+  user.otp = undefined;
   await user.save({ new: true, validateModifiedOnly: true });
 
   const token = signToken(user._id);
 
   res.status(200).json({
-    status: "Success",
-    message: "OTP Verified Successfully",
+    status: "success",
+    message: "OTP verified Successfully!",
     token,
   });
 };
@@ -117,21 +135,32 @@ exports.login = async (req, res, next) => {
       status: "error",
       message: "Both Email & password is required",
     });
+    return;
   }
 
-  const userDoc = await User.findOne({ email: email }).select("+password");
+  const user = await User.findOne({ email: email }).select("+password");
+
+  if (!user || !user.password) {
+    res.status(400).json({
+      status: "error",
+      message: "Incorrect password",
+    });
+
+    return;
+  }
 
   if (
-    !userDoc ||
-    !(await userDoc.correctPassword(password, userDoc.password))
+    !user ||
+    !(await user.correctPassword(password, user.password))
   ) {
     res.status(400).json({
       status: "error",
       message: "Email or Password is incorrect",
     });
+    return;
   }
 
-  const token = signToken(userDoc._id);
+  const token = signToken(user._id);
 
   res.status(200).json({
     status: "Success",
@@ -160,35 +189,30 @@ exports.protect = async (req, res, next) => {
     return;
   }
 
-//2- Verification of the token...
+  //2- Verification of the token...
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-//3- Check if the user still exist...
+  //3- Check if the user still exist...
   const this_user = await User.findById(decoded.userId);
 
-  if(!this_user) {
+  if (!this_user) {
     res.status(400).json({
       status: "error",
-      message: "The user doesn't exist"
+      message: "The user doesn't exist",
     });
   }
 
-//4- check if user changed their password after token wa issued....
-  if(this_user.changedPasswordAfter(decoded.iat)) {
+  //4- check if user changed their password after token wa issued....
+  if (this_user.changedPasswordAfter(decoded.iat)) {
     res.status(400).json({
       status: "error",
-      message: "User recently updated the password, Please login again"
+      message: "User recently updated the password, Please login again",
     });
   }
 
   req.user = this_user;
 
-  next(); 
-
-
-
-
-
+  next();
 };
 
 //Forgot password
