@@ -71,7 +71,7 @@ exports.sendOtp = async (req, res, next) => {
   await user.save({ new: true, validateModifiedOnly: true });
   // console.log(new_otp);
 
-  // TODO...  Send OTP to Email
+  // TODO...  Send OTP to Email using the SendGrid
   // mailService.sendEmail({
   //   from: "demo@gmail.com",
   //   to: user.email,
@@ -240,8 +240,8 @@ exports.forgotPassword = async (req, res, next) => {
     const resetUrl = `https://tawk.com/auth/reset-password/?code=${resetToken}`;
     //console.log(resetUrl);
     console.log(resetToken);
-    
-    // TODO Send Email with the reset URL later....
+
+    // TODO Send Email with the reset URL later using the sendGrid....
     {
       /*
         mailService.sendEmail({
