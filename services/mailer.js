@@ -7,22 +7,22 @@ const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(process.env.SG_KEY);
 
 const sendSGMail = async ({
-  recipent,
+  to,
   sender,
   subject,
   html,
-  text,
   attachments,
+  text,
 }) => {
   try {
-    const form = sender || "demo@gmail.com";
+    const form = sender || "ak0638010@gmail.com";
 
     const msg = {
-      to: recipent, // email of the recipent
+      to: to, // email of the recipent
       from: from, // this will be our verified member
       subject,
       html: html,
-      text: text,
+      // text: text,
       attachments,
     };
 
