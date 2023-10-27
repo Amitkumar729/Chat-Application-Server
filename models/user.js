@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     required: [true, "First Name is required"],
   },
   lastName: {
-    type: String,
+    type: String, 
     required: [true, "Last Name is required"],
   },
   about: {
@@ -65,15 +65,15 @@ const userSchema = new mongoose.Schema({
   otp_expiry_time: {
     type: Date,
   },
+  socket_id: {
+    type: String,
+  },
   friends: [
     {
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
   ],
-  socket_id: {
-    type: String
-  },
   status: {
     type: String,
     enum: ["Online", "Offline"]

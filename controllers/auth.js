@@ -69,7 +69,7 @@ exports.sendOtp = async (req, res, next) => {
   user.otp = new_otp.toString();
 
   await user.save({ new: true, validateModifiedOnly: true });
-  // console.log(new_otp);
+  console.log(new_otp);
 
   // TODO...  Send OTP to Email using the SendGrid
   // mailService.sendEmail({
@@ -149,7 +149,7 @@ exports.login = async (req, res, next) => {
   const user = await User.findOne({ email: email }).select("+password");
 
   if (!user || !user.password) {
-    res.status(400).json({
+    res.status(404).json({
       status: "error",
       message: "Incorrect password",
     });
@@ -158,7 +158,7 @@ exports.login = async (req, res, next) => {
   }
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    res.status(400).json({
+    res.status(404).json({
       status: "error",
       message: "Email or Password is incorrect",
     });
@@ -237,9 +237,9 @@ exports.forgotPassword = async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   try {
-    const resetUrl = `https://tawk.com/auth/reset-password/?code=${resetToken}`;
-    //console.log(resetUrl);
-    console.log(resetToken);
+    const resetUrl = `https://tawk.com/auth/new-password?code=${resetToken}`;
+     
+   console.log(resetToken);
 
     // TODO Send Email with the reset URL later using the sendGrid....
     {
